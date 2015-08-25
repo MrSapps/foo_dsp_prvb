@@ -1,13 +1,14 @@
 #define _WIN32_WINNT 0x0501
-#include <foobar2000.h>
+//#include <foobar2000.h>
 
-#include "../ATLHelpers/ATLHelpers.h"
+//#include "../ATLHelpers/ATLHelpers.h"
 
 #include "reverb.h"
 #include "config.h"
 
 #include "resource.h"
 
+/*
 enum
 {
 	delay = 0,
@@ -319,9 +320,11 @@ private:
 
 	ReverbConfig m_custom;
 };
+*/
 
-void RunDSPConfigPopup( const dsp_preset & p_data, HWND p_parent, dsp_preset_edit_callback & p_callback)
+void RunDSPConfigPopup( const dsp_preset & p_data, HWND p_parent)
 {
-	CMyDSPPopup popup( p_data, p_callback );
-	if (popup.DoModal(p_parent) != IDOK) p_callback.on_preset_changed(p_data);
+	//CMyDSPPopup popup( p_data, p_callback );
+	//if (popup.DoModal(p_parent) != IDOK) p_callback.on_preset_changed(p_data);
+    ::MessageBox(p_parent, L"Not implemented", L"Not implemented", MB_OK | MB_ICONERROR);
 }

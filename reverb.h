@@ -1,7 +1,8 @@
 #ifndef _REVERB_H_
 #define _REVERB_H_
 
-#include <foobar2000.h>
+//#include <foobar2000.h>
+#include "compile_hack.h"
 
 struct ReverbConfig
 {
@@ -52,7 +53,7 @@ struct ReverbConfig
 
 struct ReverbPreset
 {
-	const TCHAR * name;
+	const char * name;
 	ReverbConfig config;
 };
 
@@ -61,8 +62,8 @@ extern const ReverbPreset defaults[9];
 class dsp_reverb : public dsp_impl_base
 {
 protected:
-	pfc::array_t<float> reverb;
-	pfc::array_t<audio_sample> output_buffer;
+	std::vector<float> reverb;
+	std::vector<audio_sample> output_buffer;
 	int srate, nch, ch_mask, oldsrate, oldnch, oldch_mask;
 
 	ReverbConfig r;
@@ -113,7 +114,7 @@ public:
 	dsp_reverb( dsp_preset const & in );
 
 	static GUID g_get_guid();
-	static void g_get_name( pfc::string_base & p_out );
+	static void g_get_name( std::string & p_out );
 
 	bool on_chunk( audio_chunk * chunk, abort_callback & );
 
@@ -127,7 +128,7 @@ public:
 
 	static bool g_get_default_preset( dsp_preset & p_out );
 
-	static void g_show_config_popup( const dsp_preset & p_data, HWND p_parent, dsp_preset_edit_callback & p_callback );
+	static void g_show_config_popup( const dsp_preset & p_data, HWND p_parent );
 	static bool g_have_config_popup() { return true; }
 
 	static void make_preset( const ReverbConfig & r, dsp_preset & out, const GUID & guid );
@@ -141,10 +142,10 @@ protected:
 
 	unsigned samples_remain, reverb_samples_remain;
 
-	pfc::array_t< audio_sample > input_samples;
-	pfc::array_t< audio_sample > reverb_samples;
+	std::vector< audio_sample > input_samples;
+	std::vector< audio_sample > reverb_samples;
 
-	service_ptr_t< dsp > resampler [2];
+	std::unique_ptr< dsp > resampler [2];
 
 	inline int cnv_offset( int in ) { return in; }
 
@@ -154,7 +155,7 @@ public:
 	dsp_reverb_accurate( dsp_preset const & in );
 
 	static GUID g_get_guid();
-	static void g_get_name( pfc::string_base & p_out );
+	static void g_get_name( std::string & p_out );
 
 	bool on_chunk( audio_chunk * chunk, abort_callback & );
 

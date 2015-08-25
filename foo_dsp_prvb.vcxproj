@@ -140,6 +140,7 @@
     <ClCompile Include="reverb.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="compile_hack.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="reverb.h" />

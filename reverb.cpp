@@ -31,16 +31,17 @@
 */
 
 #define _WIN32_WINNT 0x0501
-#include <foobar2000.h>
+//#include <foobar2000.h>
+#include "compile_hack.h"
 
-#include "../ATLHelpers/ATLHelpers.h"
+//#include "../ATLHelpers/ATLHelpers.h"
 
 #include "config.h"
 #include "reverb.h"
 
 const ReverbPreset defaults[9] = {
 
-	{ _T("Room"),
+	{ ("Room"),
 		{  4960,
 		  32767, 32767, 12800, 12800,
 		   0x7D,  0x5B, 28032, 21688, -16688,     0,      0, -17792,
@@ -49,7 +50,7 @@ const ReverbPreset defaults[9] = {
 		      0,     0, 0x1B4, 0x136,   0xB8,  0x5C, -32768, -32768 }
 	},
 
-	{ _T("Studio Small"),
+	{ ("Studio Small"),
 		{ 4000,
 		 32767, 32767, 12800, 12800,
 		  0x33,  0x25, 28912, 20392, -17184, 17424, -16144, -25600,
@@ -58,7 +59,7 @@ const ReverbPreset defaults[9] = {
 		 0x18F,  0xB5,  0xB4,  0x80,   0x4C,  0x26, -32768, -32768 }
 	},
 
-	{ _T("Studio Medium"),
+	{ ("Studio Medium"),
 		{ 9248,
 		 32767, 32767, 12800, 12800,
 		  0xB1,  0x7F, 28912, 20392, -17184, 17680, -16656, -19264,
@@ -67,7 +68,7 @@ const ReverbPreset defaults[9] = {
 		 0x42F, 0x265, 0x264, 0x1B2,  0x100,  0x80, -32768, -32768 }
 	},
 
-	{ _T("Studio Large"),
+	{ ("Studio Large"),
 		{ 14320,
 		  32767, 32767, 12800, 12800,
 		   0xE3,  0xA9, 28512, 20392, -17184, 17680, -16656, -22912,
@@ -76,7 +77,7 @@ const ReverbPreset defaults[9] = {
 		  0x5EA, 0x31D, 0x31C, 0x238,  0x154,  0xAA, -32768, -32768 }
 	},
 
-	{ _T("Hall"),
+	{ ("Hall"),
 		{  22256,
 		   32767, 32767,  12800,  12800,
 		   0x1A5, 0x139,  24576,  20480,  19456, -18432, -17408, -16384,
@@ -85,7 +86,7 @@ const ReverbPreset defaults[9] = {
 		   0x9C2, 0x5C1,  0x5C0,  0x41A,  0x274,  0x13A, -32768, -32768 }
 	},
 
-	{ _T("Space Echo"),
+	{ ("Space Echo"),
 		{  31584,
 		   32767,  32767,  12800,  12800,
 		   0x33D,  0x231,  32256,  20480, -19456, -20480,  19456, -20480,
@@ -94,7 +95,7 @@ const ReverbPreset defaults[9] = {
 		  0x1056,  0xAE1,  0xAE0,  0x7A2,  0x464,  0x232, -32768, -32768 }
 	},
 
-	{ _T("Echo"),
+	{ ("Echo"),
 		{ 49184,
 		  32767,  32767, 12800,   12800,
 		      1,      1,  32767,  32767,      0, 0,      0, -32512,
@@ -103,7 +104,7 @@ const ReverbPreset defaults[9] = {
 		      0,      0, 0x1004, 0x1002,      4, 2, -32768, -32768 }
 	},
 
-	{ _T("Delay"),
+	{ ("Delay"),
 		{ 49184,
 		  32767,  32767,  12800,  12800,
 		      1,      1,  32767,  32767,      0, 0,      0,      0,
@@ -112,7 +113,7 @@ const ReverbPreset defaults[9] = {
 		      0,      0, 0x1004, 0x1002,      4, 2, -32768, -32768 }
 	},
 
-	{ _T("Half Echo"),
+	{ ("Half Echo"),
 		{  7680,
 		  32767, 32767, 12800, 12800,
 		   0x17,  0x13, 28912, 20392, -17184, 17680, -16656, -31488,
@@ -190,7 +191,7 @@ GUID dsp_reverb::g_get_guid()
 	return guid;
 }
 	
-void dsp_reverb::g_get_name( pfc::string_base & p_out ) { p_out = "Programmable reverb"; }
+void dsp_reverb::g_get_name( std::string & p_out ) { p_out = "Programmable reverb"; }
 
 bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 {
@@ -251,7 +252,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 	{
 		audio_sample *in = chunk->get_data();
 		reverb.grow_size( delay );
-		float * ptr = reverb.get_ptr();
+		float * ptr = reverb.data();
 		if ( 1 != oldnch || audio_chunk::channel_config_mono != oldch_mask || srate != oldsrate )
 		{
 			oldnch = 1;
@@ -261,20 +262,20 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			CurrAddr = 0;
 		}
 		output_buffer.grow_size( samples * 2 );
-		audio_sample * out = output_buffer.get_ptr();
-		for ( UINT n = samples; n--; )
+        audio_sample * out = output_buffer.data();
+		for ( unsigned int n = samples; n--; )
 		{
 			*out++ = *in * mVolLeft + MixREVERBLeft( *in, *in, ptr );
 			*out++ = *in * mVolRight + MixREVERBRight();
 			in++;
 		}
-		chunk->set_data( output_buffer.get_ptr(), samples, 2, srate, audio_chunk::channel_config_stereo );
+        chunk->set_data(output_buffer.data(), samples, 2, srate, audio_chunk::channel_config_stereo);
 	}
 	else if ( nch == 2 && ch_mask == audio_chunk::channel_config_stereo )
 	{
 		audio_sample *in = chunk->get_data();
 		reverb.grow_size( delay );
-		float * ptr = reverb.get_ptr();
+        float * ptr = reverb.data();
 		if ( 2 != oldnch || audio_chunk::channel_config_stereo != oldch_mask || srate != oldsrate )
 		{
 			oldnch = 2;
@@ -284,20 +285,20 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			CurrAddr = 0;
 		}
 		output_buffer.grow_size( samples * 2 );
-		audio_sample * out = output_buffer.get_ptr();
-		for ( UINT n = samples; n--; )
+        audio_sample * out = output_buffer.data();
+		for ( unsigned int n = samples; n--; )
 		{
 			*out++ = *in * mVolLeft + MixREVERBLeft( *in, in[1], ptr );
 			*out++ = in[1] * mVolRight + MixREVERBRight();
 			in += 2;
 		}
-		chunk->set_data( output_buffer.get_ptr(), samples, 2, srate, audio_chunk::channel_config_stereo );
+        chunk->set_data(output_buffer.data(), samples, 2, srate, audio_chunk::channel_config_stereo);
 	}
 	else if ( nch == 4 && ch_mask == channel_config_4point0 )
 	{
 		audio_sample * in = chunk->get_data();
 		reverb.grow_size( delay );
-		float * ptr = reverb.get_ptr();
+        float * ptr = reverb.data();
 		if ( 4 != oldnch || channel_config_4point0 != oldch_mask || srate != oldsrate )
 		{
 			oldnch = 4;
@@ -307,8 +308,8 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			CurrAddr = 0;
 		}
 		output_buffer.grow_size( samples * 4 );
-		audio_sample * out = output_buffer.get_ptr();
-		for ( UINT n = samples; n--; )
+        audio_sample * out = output_buffer.data();
+		for ( unsigned int n = samples; n--; )
 		{
 			audio_sample ml = *in + in[2];
 			audio_sample dl = *in - in[2];
@@ -322,7 +323,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			*out++ = .5f * (mr - dr);
 			in += 4;
 		}
-		chunk->set_data( output_buffer.get_ptr(), samples, 4, srate, channel_config_4point0 );
+        chunk->set_data(output_buffer.data(), samples, 4, srate, channel_config_4point0);
 	}
 	else
 	{
@@ -338,23 +339,28 @@ bool dsp_reverb::g_get_default_preset( dsp_preset & p_out )
 	return true;
 }
 
-void dsp_reverb::g_show_config_popup( const dsp_preset & p_data, HWND p_parent, dsp_preset_edit_callback & p_callback )
+void dsp_reverb::g_show_config_popup( const dsp_preset & p_data, HWND p_parent )
 {
-	::RunDSPConfigPopup( p_data, p_parent, p_callback );
+	::RunDSPConfigPopup( p_data, p_parent );
 }
 
 void dsp_reverb::make_preset( const ReverbConfig & r, dsp_preset & out, const GUID & guid )
 {
+    // TODO: Remove
+    /*
 	dsp_preset_builder builder; builder << r.delay << r.mVolLeft << r.mVolRight << r.VolLeft << r.VolRight << r.FB_SRC_A << r.FB_SRC_B
 		<< r.IIR_ALPHA << r.ACC_COEF_A << r.ACC_COEF_B << r.ACC_COEF_C << r.ACC_COEF_D << r.IIR_COEF << r.FB_ALPHA << r.FB_X
 		<< r.IIR_DEST_A0 << r.IIR_DEST_A1 << r.ACC_SRC_A0 << r.ACC_SRC_A1 << r.ACC_SRC_B0 << r.ACC_SRC_B1
 		<< r.IIR_SRC_A0 << r.IIR_SRC_A1 << r.IIR_DEST_B0 << r.IIR_DEST_B1 << r.ACC_SRC_C0 << r.ACC_SRC_C1
 		<< r.ACC_SRC_D0 << r.ACC_SRC_D1 << r.IIR_SRC_B1 << r.IIR_SRC_B0 << r.MIX_DEST_A0 << r.MIX_DEST_A1
 		<< r.MIX_DEST_B0 << r.MIX_DEST_B1 << r.IN_COEF_L << r.IN_COEF_R; builder.finish(guid, out);
+        */
 }
 
 void dsp_reverb::parse_preset( ReverbConfig & r, const dsp_preset & in )
 {
+    // TODO: Remove
+    /*
 	try
 	{
 		dsp_preset_parser parser( in ); parser >> r.delay >> r.mVolLeft >> r.mVolRight >> r.VolLeft >> r.VolRight >> r.FB_SRC_A >> r.FB_SRC_B
@@ -365,12 +371,15 @@ void dsp_reverb::parse_preset( ReverbConfig & r, const dsp_preset & in )
 			>> r.MIX_DEST_B0 >> r.MIX_DEST_B1 >> r.IN_COEF_L >> r.IN_COEF_R;
 	}
 	catch(exception_io_data) { r = defaults[ 3 ].config; }
+    */
+    r = defaults[3].config;
 }
 
 void dsp_reverb_accurate::recreate_resamplers()
 {
+    /* TODO FIX UP
 	if ( !resampler_entry::g_create( resampler [0], srate, 22050, 0 ) ||
-		! resampler_entry::g_create( resampler [1], 22050, srate, 0 ) ) throw exception_io_data( "Invalid sample rate conversion or no resamplers installed." );
+		! resampler_entry::g_create( resampler [1], 22050, srate, 0 ) ) throw exception_io_data( "Invalid sample rate conversion or no resamplers installed." );*/
 }
 
 dsp_reverb_accurate::dsp_reverb_accurate( dsp_preset const & in ) : dsp_reverb( in )
@@ -384,7 +393,7 @@ GUID dsp_reverb_accurate::g_get_guid()
 	return guid;
 }
 	
-void dsp_reverb_accurate::g_get_name( pfc::string_base & p_out ) { p_out = "Programmable reverb (resampling/accurate)"; }
+void dsp_reverb_accurate::g_get_name( std::string & p_out ) { p_out = "Programmable reverb (resampling/accurate)"; }
 
 bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abort )
 {
@@ -451,7 +460,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 		cfgf(IN_COEF_R);
 
 		reverb.grow_size( delay );
-		memset( reverb.get_ptr(), 0, delay * sizeof( float ) );
+        memset(reverb.data(), 0, delay * sizeof(float));
 
 		CurrAddr = 0;
 	}
@@ -460,14 +469,18 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 
 	dsp_chunk_list_impl resample_list;
 
-	audio_chunk * temp = resample_list.insert_item( 0, ( samples + samples_remain ) * 2 );
+    // TODO: Check semantics
+	//audio_chunk * temp = resample_list.insert_item( 0, ( samples + samples_remain ) * 2 );
+    audio_chunk * temp = new audio_chunk;
+    resample_list.push_back(temp);
+
 	temp->grow_data_size( ( samples + samples_remain ) * 2 );
 	temp->set_sample_count( samples + samples_remain );
 	temp->set_srate( srate );
 	temp->set_channels( 2, audio_chunk::channel_config_stereo );
 
 	input_samples.grow_size( ( samples + samples_remain ) * nch );
-	audio_sample * in = input_samples.get_ptr();
+	audio_sample * in = input_samples.data();
 	memcpy( in + samples_remain * nch, chunk->get_data(), samples * nch * sizeof( float ) );
 
 	audio_sample * out = temp->get_data();
@@ -501,13 +514,14 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 		}
 	}
 
-	resampler [0]->run_abortable( &resample_list, NULL, 0, p_abort );
+    // TODO: Resample
+	//resampler [0]->run_abortable( &resample_list, NULL, 0, p_abort );
 
-	float * ptr = reverb.get_ptr();
+	float * ptr = reverb.data();
 
-	for ( unsigned i = 0, j = resample_list.get_count(); i < j; i++ )
+	for ( unsigned i = 0, j = resample_list.size(); i < j; i++ )
 	{
-		audio_chunk * reverb_chunk = resample_list.get_item( i );
+		audio_chunk * reverb_chunk = resample_list[ i ];
 		audio_sample * samples = reverb_chunk->get_data();
 
 		for ( unsigned k = 0; k < reverb_chunk->get_sample_count(); k++ )
@@ -517,35 +531,36 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 		}
 	}
 
-	resampler [1]->run_abortable( &resample_list, NULL, 0, p_abort );
+    // TODO: Resample
+	//resampler [1]->run_abortable( &resample_list, NULL, 0, p_abort );
 
 	unsigned processed_out = 0;
 
-	for ( unsigned i = 0; i < resample_list.get_count(); i++ )
+	for ( unsigned i = 0; i < resample_list.size(); i++ )
 	{
-		processed_out += resample_list.get_item( i )->get_sample_count();
+		processed_out += resample_list[ i ]->get_sample_count();
 	}
 
 	reverb_samples.grow_size( ( processed_out + reverb_samples_remain ) * 2 );
-	audio_sample * reverb_ptr = reverb_samples.get_ptr() + reverb_samples_remain * 2;
+	audio_sample * reverb_ptr = reverb_samples.data() + reverb_samples_remain * 2;
 	
-	for ( unsigned i = 0; i < resample_list.get_count(); i++ )
+    for (unsigned i = 0; i < resample_list.size(); i++)
 	{
-		audio_chunk * reverb_chunk = resample_list.get_item( i );
+		audio_chunk * reverb_chunk = resample_list[ i ];
 		audio_sample * reverb_data = reverb_chunk->get_data();
 		unsigned copy_count = reverb_chunk->get_sample_count() * 2;
 		memcpy( reverb_ptr, reverb_data, copy_count * sizeof( audio_sample ) );
 		reverb_ptr += copy_count;
 	}
 
-	reverb_ptr = reverb_samples.get_ptr();
+	reverb_ptr = reverb_samples.data();
 
 	unsigned processed_todo = min( processed_out, samples );
 
 	if ( nch == 1 )
 	{
 		output_buffer.grow_size( processed_todo * 2 );
-		audio_sample * out = output_buffer.get_ptr();
+		audio_sample * out = output_buffer.data();
 
 		for ( unsigned i = 0; i < processed_todo; i++ )
 		{
@@ -558,7 +573,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 	else if ( nch == 2 )
 	{
 		output_buffer.grow_size( processed_todo * 2 );
-		audio_sample * out = output_buffer.get_ptr();
+		audio_sample * out = output_buffer.data();
 
 		for ( unsigned i = 0; i < processed_todo; i++ )
 		{
@@ -571,7 +586,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 	else if ( nch == 4 )
 	{
 		output_buffer.grow_size( processed_todo * 4 );
-		audio_sample * out = output_buffer.get_ptr();
+		audio_sample * out = output_buffer.data();
 
 		for ( unsigned i = 0; i < processed_todo; i++ )
 		{
@@ -636,7 +651,7 @@ bool dsp_reverb_accurate::g_get_default_preset( dsp_preset & p_out )
 
 class dsp_stereo2x_2 : public dsp_impl_base
 {
-	pfc::array_t<audio_sample> temp;
+	std::vector<audio_sample> temp;
 
 public:
 	static GUID g_get_guid()
@@ -645,7 +660,7 @@ public:
 		return guid;
 	}
 
-	static void g_get_name( pfc::string_base & p_out ) { p_out = "Convert stereo to 4 channels (front only)"; }
+	static void g_get_name( std::string & p_out ) { p_out = "Convert stereo to 4 channels (front only)"; }
 
 	virtual bool on_chunk( audio_chunk * chunk, abort_callback & )
 	{
@@ -653,7 +668,7 @@ public:
 		{
 			UINT samples = chunk->get_sample_count();
 			temp.grow_size( samples * 4 );
-			audio_sample * p_temp = temp.get_ptr(),
+			audio_sample * p_temp = temp.data(),
 			               * data = chunk->get_data();
 			for( UINT n = samples;n--; )
 			{
@@ -663,7 +678,7 @@ public:
 				*p_temp++ = 0;
 			}
 
-			chunk->set_data( temp.get_ptr(), samples, 4, chunk->get_srate(), channel_config_4point0 );
+			chunk->set_data( temp.data(), samples, 4, chunk->get_srate(), channel_config_4point0 );
 		}
 		return true;
 	}
@@ -675,6 +690,7 @@ public:
 	virtual bool need_track_change_mark() { return false; }
 };
 
+/*
 static dsp_factory_t          <dsp_reverb>          g_dsp_reverb_factory;
 static dsp_factory_t          <dsp_reverb_accurate> g_dsp_reverb_accurate_factory;
 static dsp_factory_nopreset_t <dsp_stereo2x_2>      g_dsp_stereo2x_2_factory;
@@ -682,3 +698,4 @@ static dsp_factory_nopreset_t <dsp_stereo2x_2>      g_dsp_stereo2x_2_factory;
 DECLARE_COMPONENT_VERSION("Programmable reverb DSP", MYVERSION, "Programmable reverb, based on PSX reverb\ncode from the P.E.Op.S. project.\n\nhttp://www.sourceforge.net/projects/peops");
 
 VALIDATE_COMPONENT_FILENAME("foo_dsp_prvb.dll");
+*/
