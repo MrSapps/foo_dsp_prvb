@@ -26,27 +26,27 @@ struct audio_chunk
 
     unsigned int get_sample_count()
     {
-        return 0;
+        return mData.size();
     }
 
     int get_channel_config()
     {
-        return 0;
+        return mChanConfig;
     }
 
     int get_srate()
     {
-        return 0;
+        return mRate;
     }
 
     int get_channels()
     {
-        return 0;
+        return mChans;
     }
 
     audio_sample* get_data()
     {
-        return nullptr;
+        return mData.data();
     }
 
     void set_data(audio_sample*, int, int ,int, int)
@@ -54,25 +54,35 @@ struct audio_chunk
 
     }
 
-    void set_channels(int, int)
+    void set_channels(int chans, int config)
     {
-
+        mChans = chans;
+        mChanConfig = config;
     }
 
-    void set_sample_count(int)
+    void set_sample_count(int count)
     {
-
+        mData.resize(count);
     }
 
-    void set_srate(int)
+    void set_srate(int rate)
     {
-
+        mRate = rate;
     }
 
     void grow_data_size(int size)
     {
-        // if size() < size then resize
+        if (mData.size() < size)
+        {
+            mData.resize(size);
+        }
     }
+
+private:
+    int mRate = 38700;
+    int mChans = 2;
+    int mChanConfig = channel_config_stereo;
+    std::vector<float> mData;
 };
 
 class dsp_impl_base

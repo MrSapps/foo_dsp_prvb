@@ -710,6 +710,7 @@ int main(char**, int)
     dsp_reverb_accurate reverb(dspPreset);
 
     audio_chunk chunk;
+    chunk.set_sample_count(100);
     chunk.set_data(nullptr, 0, 0, 0, 0);
     reverb.on_chunk(&chunk, []() 
     {
