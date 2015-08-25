@@ -78,7 +78,10 @@ struct audio_chunk
 class dsp_impl_base
 {
 public:
-
+    audio_chunk* insert_chunk(int size)
+    {
+        return new audio_chunk;
+    }
 };
 
 class dsp_preset
