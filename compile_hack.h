@@ -68,6 +68,11 @@ struct audio_chunk
     {
 
     }
+
+    void grow_data_size(int size)
+    {
+        // if size() < size then resize
+    }
 };
 
 class dsp_impl_base

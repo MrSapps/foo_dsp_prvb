@@ -193,6 +193,14 @@ GUID dsp_reverb::g_get_guid()
 	
 void dsp_reverb::g_get_name( std::string & p_out ) { p_out = "Programmable reverb"; }
 
+static void grow_size(std::vector<float>& list, unsigned int size)
+{
+    if (list.size() < size)
+    {
+        list.resize(size);
+    }
+}
+
 bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 {
 	UINT samples = chunk->get_sample_count();
@@ -251,7 +259,8 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 	if ( nch == 1 && ch_mask == audio_chunk::channel_config_mono )
 	{
 		audio_sample *in = chunk->get_data();
-		reverb.grow_size( delay );
+        grow_size(reverb, delay);
+
 		float * ptr = reverb.data();
 		if ( 1 != oldnch || audio_chunk::channel_config_mono != oldch_mask || srate != oldsrate )
 		{
@@ -261,7 +270,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			memset( ptr, 0, delay * sizeof( float ) );
 			CurrAddr = 0;
 		}
-		output_buffer.grow_size( samples * 2 );
+        grow_size(output_buffer, samples * 2);
         audio_sample * out = output_buffer.data();
 		for ( unsigned int n = samples; n--; )
 		{
@@ -274,7 +283,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 	else if ( nch == 2 && ch_mask == audio_chunk::channel_config_stereo )
 	{
 		audio_sample *in = chunk->get_data();
-		reverb.grow_size( delay );
+        grow_size(reverb, delay);
         float * ptr = reverb.data();
 		if ( 2 != oldnch || audio_chunk::channel_config_stereo != oldch_mask || srate != oldsrate )
 		{
@@ -284,7 +293,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			memset( ptr, 0, delay * sizeof( float ) );
 			CurrAddr = 0;
 		}
-		output_buffer.grow_size( samples * 2 );
+        grow_size(output_buffer, samples * 2);
         audio_sample * out = output_buffer.data();
 		for ( unsigned int n = samples; n--; )
 		{
@@ -297,7 +306,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 	else if ( nch == 4 && ch_mask == channel_config_4point0 )
 	{
 		audio_sample * in = chunk->get_data();
-		reverb.grow_size( delay );
+        grow_size(reverb, delay);
         float * ptr = reverb.data();
 		if ( 4 != oldnch || channel_config_4point0 != oldch_mask || srate != oldsrate )
 		{
@@ -307,7 +316,7 @@ bool dsp_reverb::on_chunk( audio_chunk * chunk, abort_callback & )
 			memset( ptr, 0, delay * sizeof( float ) );
 			CurrAddr = 0;
 		}
-		output_buffer.grow_size( samples * 4 );
+        grow_size(output_buffer, samples * 4);
         audio_sample * out = output_buffer.data();
 		for ( unsigned int n = samples; n--; )
 		{
@@ -459,7 +468,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 		cfgf(IN_COEF_L);
 		cfgf(IN_COEF_R);
 
-		reverb.grow_size( delay );
+        grow_size(reverb, delay);
         memset(reverb.data(), 0, delay * sizeof(float));
 
 		CurrAddr = 0;
@@ -469,7 +478,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 
 	dsp_chunk_list_impl resample_list;
 
-    // TODO: Check semantics
+    // 0 is index, 2nd arg is hint at max size
 	//audio_chunk * temp = resample_list.insert_item( 0, ( samples + samples_remain ) * 2 );
     audio_chunk * temp = new audio_chunk;
     resample_list.push_back(temp);
@@ -479,7 +488,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 	temp->set_srate( srate );
 	temp->set_channels( 2, audio_chunk::channel_config_stereo );
 
-	input_samples.grow_size( ( samples + samples_remain ) * nch );
+    grow_size(input_samples, (samples + samples_remain) * nch);
 	audio_sample * in = input_samples.data();
 	memcpy( in + samples_remain * nch, chunk->get_data(), samples * nch * sizeof( float ) );
 
@@ -541,7 +550,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 		processed_out += resample_list[ i ]->get_sample_count();
 	}
 
-	reverb_samples.grow_size( ( processed_out + reverb_samples_remain ) * 2 );
+    grow_size(reverb_samples, (processed_out + reverb_samples_remain) * 2);
 	audio_sample * reverb_ptr = reverb_samples.data() + reverb_samples_remain * 2;
 	
     for (unsigned i = 0; i < resample_list.size(); i++)
@@ -559,7 +568,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 
 	if ( nch == 1 )
 	{
-		output_buffer.grow_size( processed_todo * 2 );
+        grow_size(output_buffer, processed_todo * 2);
 		audio_sample * out = output_buffer.data();
 
 		for ( unsigned i = 0; i < processed_todo; i++ )
@@ -572,7 +581,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 	}
 	else if ( nch == 2 )
 	{
-		output_buffer.grow_size( processed_todo * 2 );
+        grow_size(output_buffer, processed_todo * 2);
 		audio_sample * out = output_buffer.data();
 
 		for ( unsigned i = 0; i < processed_todo; i++ )
@@ -585,7 +594,7 @@ bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abor
 	}
 	else if ( nch == 4 )
 	{
-		output_buffer.grow_size( processed_todo * 4 );
+        grow_size(output_buffer, processed_todo * 4);
 		audio_sample * out = output_buffer.data();
 
 		for ( unsigned i = 0; i < processed_todo; i++ )
@@ -667,7 +676,7 @@ public:
 		if ( chunk->get_channels() == 2 && chunk->get_channel_config() == audio_chunk::channel_config_stereo )
 		{
 			UINT samples = chunk->get_sample_count();
-			temp.grow_size( samples * 4 );
+            grow_size(temp, samples * 4);
 			audio_sample * p_temp = temp.data(),
 			               * data = chunk->get_data();
 			for( UINT n = samples;n--; )
