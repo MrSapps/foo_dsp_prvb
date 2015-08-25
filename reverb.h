@@ -157,7 +157,7 @@ public:
 	static GUID g_get_guid();
 	static void g_get_name( std::string & p_out );
 
-	bool on_chunk( audio_chunk * chunk, abort_callback & );
+	bool on_chunk( audio_chunk * chunk, abort_callback );
 
 	void flush();
 

@@ -404,7 +404,7 @@ GUID dsp_reverb_accurate::g_get_guid()
 	
 void dsp_reverb_accurate::g_get_name( std::string & p_out ) { p_out = "Programmable reverb (resampling/accurate)"; }
 
-bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback & p_abort )
+bool dsp_reverb_accurate::on_chunk( audio_chunk * chunk, abort_callback  p_abort )
 {
 	UINT samples = chunk->get_sample_count();
 	srate = chunk->get_srate();
@@ -698,6 +698,26 @@ public:
 	virtual double get_latency() { return 0; }
 	virtual bool need_track_change_mark() { return false; }
 };
+
+
+#include <iostream>
+
+int main(char**, int)
+{
+    std::cout << "Hello reverb" << std::endl;
+
+    dsp_preset dspPreset;
+    dsp_reverb_accurate reverb(dspPreset);
+
+    audio_chunk chunk;
+    chunk.set_data(nullptr, 0, 0, 0, 0);
+    reverb.on_chunk(&chunk, []() 
+    {
+        std::cout << "abort call back" << std::endl;
+    });
+
+    return 0;
+}
 
 /*
 static dsp_factory_t          <dsp_reverb>          g_dsp_reverb_factory;
